@@ -1,0 +1,11 @@
+id,email,role,password_hash,api_key
+1,john.doe@example.com,admin,$2b$10$K.ExampleHashForJohn1234567890abcde,550e8400-e29b-41d4-a716-446655440000
+2,jane.smith@company.com,user,$2b$10$L.ExampleHashForJane9876543210zyxwv,6ba7b810-9dad-11d1-80b4-00c04fd430c8
+3,admin@marketplace.com,admin,$2b$10$M.StrongAdminHashHereWithSalt12345,123e4567-e89b-12d3-a456-426614174000
+4,dev@test.com,developer,$2b$10$N.DevPasswordHashExample5678901234,987fcdeb-1234-5678-9abc-def012345678
+5,support@help.com,support,$2b$10$O.SupportHashWithBcryptFormat12345,11111111-2222-3333-4444-555555555555
+6,mike@gmail.com,user,$2b$10$P.UserMikePasswordHashExample67890,22222222-3333-4444-5555-666666666666
+7,manager@team.com,manager,$2b$10$Q.ManagerSecureHashFormatExample12,33333333-4444-5555-6666-777777777777
+8,test.user@example.com,user,$2b$10$R.TestUserHashWithSaltAndPepper12,44444444-5555-6666-7777-888888888888
+9,hr@company.com,hr,$2b$10$S.HRPasswordSecureHashExample34567,55555555-6666-7777-8888-999999999999
+10,guest@market.com,guest,$2b$10$T.GuestDefaultHashFormatExample6789,66666666-7777-8888-9999-aaaaaaaaaaaa
