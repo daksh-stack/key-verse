@@ -1,21 +1,27 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import MyApis from './pages/MyApis';
+import Studio from './pages/Studio';
+import ApiDetails from './pages/ApiDetails';
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [apis, setApi] = useState([]);
-  const [apiKey, setApiKey] = useState('');
-
-  useEffect(() => {
-    axios.get('')
-  })
-
   return (
-    <>
-
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Landing />} />
+          <Route path="login" element={<Login />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="my-apis" element={<MyApis />} />
+          <Route path="studio/:apiId" element={<Studio />} />
+          <Route path="api/:apiId" element={<ApiDetails />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
