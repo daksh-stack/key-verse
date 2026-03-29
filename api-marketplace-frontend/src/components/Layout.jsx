@@ -1,13 +1,27 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import { motion } from 'framer-motion';
 
 const Layout = () => {
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
     return (
-        <div className="min-h-screen bg-bg-deep">
-            <Navbar />
-            <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                <Outlet />
-            </main>
+        <div className="min-h-screen bg-[#050505] text-white flex">
+            {/* Sidebar */}
+            <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+
+            {/* Main Content Area */}
+            <motion.div 
+                animate={{ marginLeft: isCollapsed ? 64 : 240 }}
+                className="flex-1 flex flex-col min-h-screen transition-all duration-300"
+            >
+                <Navbar />
+                <main className="p-8 max-w-[1600px] mx-auto w-full animate-fade-in">
+                    <Outlet />
+                </main>
+            </motion.div>
         </div>
     );
 };

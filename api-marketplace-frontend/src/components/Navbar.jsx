@@ -1,73 +1,49 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Shield, Cpu, Activity, User, Home } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Bell, User, Zap } from 'lucide-react';
 
 const Navbar = () => {
-    const location = useLocation();
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    const navLinks = [
-        { name: 'Dashboard', path: '/dashboard', icon: Activity },
-        { name: 'Provider', path: '/my-apis', icon: Shield },
-    ];
+  return (
+    <header className="h-16 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
+      {/* Search Bar */}
+      <div className="flex-1 max-w-xl">
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#10b981] transition-colors" size={18} />
+          <input 
+            type="text" 
+            placeholder="Search APIs, documentation, or providers..." 
+            className="w-full bg-[#0D0D0D] border border-white/5 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[#10b981]/50 focus:bg-[#161616] transition-all"
+          />
+        </div>
+      </div>
 
-    return (
-        <nav className="glass sticky top-0 z-50 px-6 py-4">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
-                {/* Logo Section */}
-                <Link to="/" className="flex items-center gap-3 group">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-blue-500 blur-lg opacity-40 group-hover:opacity-100 transition duration-500 rounded-full" />
-                        <div className="relative bg-bg-card p-2 rounded-xl border border-blue-500/30">
-                            <Cpu className="text-blue-400 w-6 h-6 group-hover:scale-110 transition duration-300" />
-                        </div>
-                    </div>
-                    <span className="text-2xl font-bold tracking-tighter neon-text bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                        APEX<span className="text-blue-500">HUB</span>
-                    </span>
-                </Link>
+      {/* Right Actions */}
+      <div className="flex items-center gap-4">
+        <button className="p-2 text-zinc-400 hover:text-white transition-colors relative">
+          <Bell size={20} />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-[#10b981] rounded-full border-2 border-[#050505]" />
+        </button>
+        
+        <div className="h-8 w-px bg-white/5 mx-2" />
 
-                {/* Navigation Links */}
-                <div className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-2xl border border-white/5">
-                    {navLinks.map((link) => {
-                        const isActive = location.pathname === link.path;
-                        const Icon = link.icon;
-
-                        return (
-                            <Link
-                                key={link.path}
-                                to={link.path}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-300 relative group
-                  ${isActive ? 'text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                            >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="nav-bg"
-                                        className="absolute inset-0 bg-blue-600 rounded-xl -z-10 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
-                                        transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
-                                    />
-                                )}
-                                <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-400'} />
-                                {link.name}
-                            </Link>
-                        );
-                    })}
-                </div>
-
-                {/* User / Action Profile */}
-                <div className="flex items-center gap-4">
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate(localStorage.getItem('apiKey') ? '/dashboard' : '/login')}
-                        className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-black shadow-lg shadow-blue-500/20"
-                    >
-                        <User size={18} />
-                        <span>{localStorage.getItem('apiKey') ? 'USER_CONSOLE' : 'ACCESS_PULSE'}</span>
-                    </motion.button>
-                </div>
-            </div>
-        </nav>
-    );
+        <div className="flex items-center gap-3 pl-2">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-medium text-white">{user.email?.split('@')[0] || 'Guest'}</p>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{user.role || 'Explorer'}</p>
+          </div>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="w-10 h-10 rounded-full bg-[#161616] border border-white/10 flex items-center justify-center hover:border-[#10b981]/50 transition-all text-zinc-400 hover:text-[#10b981]"
+          >
+            <User size={20} />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
 };
 
 export default Navbar;

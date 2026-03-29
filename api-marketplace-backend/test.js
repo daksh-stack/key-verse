@@ -1,12 +1,13 @@
 const request = require('supertest');
-const app = require('./server');  // ← points to your server.js file
+const app = require('./management/server');  // ← points to your server.js file
 
 describe('User Signup', () => {
   it('should create a new user and return 201', async () => {
+    const email = `testuser_${Math.floor(Math.random() * 100000)}@example.com`;
     const response = await request(app)
       .post('/users/signup')
       .send({
-        email: 'testuser@example.com',
+        email,
         password: 'password123',
         role: 'consumer'
       })

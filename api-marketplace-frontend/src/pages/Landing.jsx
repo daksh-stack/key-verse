@@ -1,146 +1,201 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Search, ChevronRight, Zap, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
+import { Search, ArrowRight, TrendingUp, Zap, Layers, BarChart2, Plus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CompareModal from '../components/CompareModal';
 
 const Landing = () => {
     const navigate = useNavigate();
     const [apis, setApis] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedApis, setSelectedApis] = useState(JSON.parse(localStorage.getItem('stagedApis') || '[]'));
+    const [isCompareOpen, setIsCompareOpen] = useState(false);
     const MGT_URL = import.meta.env.VITE_MANAGEMENT_URL;
 
     useEffect(() => {
         axios.get(`${MGT_URL}/apis/public`)
             .then(res => setApis(res.data))
-            .catch(err => console.error("Could not load public APIs"));
-    }, []);
+            .catch(error => console.error("Could not load public APIs", error));
+    }, [MGT_URL]);
+
+    useEffect(() => {
+        localStorage.setItem('stagedApis', JSON.stringify(selectedApis));
+    }, [selectedApis]);
+
+    const toggleSelection = (apiId, e) => {
+        e.stopPropagation();
+        if (selectedApis.includes(apiId)) {
+            setSelectedApis(selectedApis.filter(id => id !== apiId));
+        } else {
+            if (selectedApis.length < 3) {
+                setSelectedApis([...selectedApis, apiId]);
+            }
+        }
+    };
 
     const filteredApis = apis.filter(api =>
-        api.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        api.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        api.category?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
-        <div className="space-y-24 pb-20 overflow-hidden">
-            {/* Hero Section */}
-            <section className="relative min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
-                {/* Background Glows */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 blur-[120px] -z-10 rounded-full animate-pulse" />
-                <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-purple-600/5 blur-[100px] -z-10 rounded-full" />
+        <div className="animate-fade-in space-y-16 pb-24">
+            {/* Minimalist Hero */}
+            <section className="py-12 flex flex-col items-center text-center space-y-6">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] text-[10px] font-bold tracking-widest uppercase">
+                    <Zap size={10} fill="#10b981" /> The Intelligence Protocol
+                </div>
+                
+                <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white max-w-3xl leading-[1.1]">
+                    The Universal <span className="text-[#10b981]">API Fabric</span>
+                </h1>
+                <p className="text-zinc-500 max-w-xl text-lg font-light leading-relaxed">
+                    Compare performance, evaluate costs, and choose the best fit.
+                    Integrate the world's most stable infrastructure in minutes.
+                </p>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="space-y-8 max-w-4xl"
-                >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-bold tracking-widest uppercase">
-                        <Zap size={14} className="fill-blue-400" /> API Fabric for the AI Era
-                    </div>
-
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-tight italic">
-                        BUILD THE <br />
-                        <span className="text-white neon-text">NEXT-GEN</span> <br />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">ECOSYSTEM</span>
-                    </h1>
-
-                    <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light">
-                        Deploy telco-grade APIs with zero-trust security and native AI orchestration.
-                        The marketplace reimagined for the <span className="text-white font-medium italic underline decoration-blue-500">autonomous agent epoch.</span>
-                    </p>
-
-                    <div className="flex flex-wrap justify-center gap-6 pt-4">
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:shadow-[0_0_50px_rgba(37,99,235,0.5)] transition duration-500"
-                        >
-                            INITIATE PROTOCOL
-                        </motion.button>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="bg-white/5 border border-white/10 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-white/10 transition backdrop-blur-sm"
-                        >
-                            READ DOCS
-                        </motion.button>
-                    </div>
-                </motion.div>
-            </section>
-
-            {/* Marketplace Explorer */}
-            <section className="max-w-7xl mx-auto px-6 space-y-12">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                    <div className="space-y-2">
-                        <h2 className="text-4xl font-black text-white italic tracking-tight">ACTIVE MARKET</h2>
-                        <div className="h-1.5 w-24 speed-gradient rounded-full" />
-                    </div>
-
-                    <div className="relative group min-w-[300px]">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-hover:text-blue-500 transition" size={20} />
+                {/* Search Prime */}
+                <div className="w-full max-w-2xl pt-8">
+                    <div className="relative group">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#10b981] transition-colors" size={20} />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search Marketplace..."
-                            className="w-full pl-12 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-white placeholder:text-slate-600"
+                            placeholder="Search providers (e.g. OpenAI, Stripe, Marketplace)..."
+                            className="w-full bg-[#0D0D0D] border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-lg focus:outline-none focus:border-[#10b981]/50 focus:bg-[#121212] transition-all shadow-2xl"
                         />
                     </div>
                 </div>
+            </section>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <AnimatePresence>
+            {/* Marketplace Table / Rows */}
+            <section className="space-y-6">
+                <div className="flex items-center justify-between px-4 pb-2 border-b border-white/5">
+                    <div className="flex items-center gap-3 text-zinc-400 font-medium text-sm">
+                        <TrendingUp size={16} className="text-[#10b981]" />
+                        Active Market Registry
+                    </div>
+                    <div className="flex items-center gap-4 text-[11px] text-zinc-600 uppercase tracking-widest font-bold">
+                        <span className="hidden md:inline">Selection</span>
+                        <span className="hidden md:inline">Analytics</span>
+                        <span>Gateway</span>
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <AnimatePresence mode="popLayout">
                         {filteredApis.map((api, index) => (
                             <motion.div
                                 key={api.id}
-                                layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                transition={{ duration: 0.4, delay: index * 0.05 }}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
+                                transition={{ duration: 0.2, delay: index * 0.03 }}
                                 onClick={() => navigate(`/api/${api.id}`)}
-                                className="glass p-8 rounded-[40px] relative group hover:-translate-y-2 transition duration-500 overflow-hidden cursor-pointer"
+                                className={`group flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                                    selectedApis.includes(api.id) 
+                                    ? 'bg-[#10b981]/5 border-[#10b981]/30 shadow-[0_0_20px_rgba(16,185,129,0.05)]' 
+                                    : 'bg-[#0D0D0D] border-white/5 hover:border-[#10b981]/30 hover:bg-[#121212]'
+                                }`}
                             >
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
+                                <div className="flex items-center gap-5">
+                                    <button 
+                                        onClick={(e) => toggleSelection(api.id, e)}
+                                        className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                                            selectedApis.includes(api.id)
+                                            ? 'bg-[#10b981] border-[#10b981] text-black scale-110 shadow-lg shadow-[#10b981]/20'
+                                            : 'border-white/10 text-transparent hover:border-[#10b981]'
+                                        }`}
+                                    >
+                                        <Check size={12} />
+                                    </button>
 
-                                <div className="flex items-start justify-between mb-8">
-                                    <div className="p-4 bg-blue-500/10 rounded-3xl text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition duration-500 shadow-inner">
-                                        <Globe size={28} />
+                                    <div className="w-12 h-12 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 group-hover:bg-[#10b981]/10 group-hover:text-[#10b981] transition-all">
+                                        {api.logo_url ? <img src={api.logo_url} alt={api.name} className="w-8 h-8 object-contain" /> : <Layers size={22} />}
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Live
+                                    <div>
+                                        <h3 className="text-white font-semibold group-hover:text-[#10b981] transition-colors">{api.name}</h3>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-[10px] text-zinc-500 font-mono tracking-tight">{api.id.split('-')[0]}</span>
+                                            <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{api.category || 'Standard'}</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <h3 className="text-2xl font-black text-white mb-2 tracking-tight group-hover:text-blue-400 transition duration-300">
-                                    {api.name?.toUpperCase()}
-                                </h3>
-                                <p className="text-slate-400 text-sm mb-8 leading-relaxed font-normal">
-                                    Secure gateway to {api.base_url}. Optimized for sub-ms latency in AI workflows.
-                                </p>
-
-                                <div className="flex items-center justify-between pt-6 border-t border-white/5 group-hover:border-blue-500/20 transition">
-                                    <div className="flex items-center gap-2 text-blue-400 font-black text-xs">
-                                        <Zap size={14} /> 99.9% UPTIME
+                                <div className="flex items-center gap-8 text-right">
+                                    <div className="hidden md:flex flex-col items-end">
+                                        <div className="flex items-center gap-1.5 text-[10px] text-[#10b981] font-bold">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
+                                            Live
+                                        </div>
+                                        <span className="text-[10px] text-zinc-600 font-mono">Verified Performance</span>
                                     </div>
-                                    <button className="flex items-center gap-2 text-white font-black text-sm group/btn bg-white/5 px-4 py-2 rounded-xl border border-white/5 hover:bg-blue-600 hover:border-blue-600 transition duration-300">
-                                        INIT <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition duration-300" />
-                                    </button>
+
+                                    <div className="bg-white/5 p-2 rounded-lg text-zinc-500 group-hover:text-[#10b981] transition-all">
+                                        <ArrowRight size={18} />
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
                     </AnimatePresence>
                 </div>
-
-                {filteredApis.length === 0 && (
-                    <div className="text-center py-20 bg-white/2 rounded-[40px] border border-dashed border-white/10">
-                        <Search className="mx-auto text-slate-700 mb-4" size={48} />
-                        <p className="text-slate-500 font-medium text-lg">No endpoints found matching your query.</p>
-                    </div>
-                )}
             </section>
+
+            {/* Floating Comparison Drawer */}
+            <AnimatePresence>
+                {selectedApis.length > 0 && (
+                    <motion.div
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 100, opacity: 0 }}
+                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm"
+                    >
+                        <div className="bg-[#121212]/80 backdrop-blur-xl border border-[#10b981]/20 p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4">
+                            <div className="flex -space-x-3 overflow-hidden ml-2">
+                                {selectedApis.map(id => (
+                                    <div key={id} className="inline-block h-8 w-8 rounded-full bg-[#050505] border-2 border-[#121212] flex items-center justify-center text-[#10b981] shadow-xl">
+                                        <Box size={14} />
+                                    </div>
+                                ))}
+                                {selectedApis.length < 3 && (
+                                    <div className="inline-block h-8 w-8 rounded-full bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center text-zinc-600">
+                                        <Plus size={14} />
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="flex-1">
+                                <p className="text-white text-[11px] font-bold tracking-tight">{selectedApis.length} Provider{selectedApis.length > 1 ? 's' : ''} Staged</p>
+                                <p className="text-zinc-500 text-[9px] uppercase tracking-widest font-bold">Ready for Intelligence Matrix</p>
+                            </div>
+
+                            <button
+                                onClick={() => setIsCompareOpen(true)}
+                                className="bg-[#10b981] text-black px-4 py-2 rounded-lg text-xs font-black shadow-lg shadow-[#10b981]/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                            >
+                                <BarChart2 size={14} /> Compare
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Comparison Modal Overlay */}
+            <AnimatePresence>
+                {isCompareOpen && (
+                    <CompareModal 
+                        selectedApiIds={selectedApis} 
+                        onClose={() => setIsCompareOpen(false)} 
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
+
+const Box = ({ size }) => <Layers size={size} />;
 
 export default Landing;

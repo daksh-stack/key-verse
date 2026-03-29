@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+ 
+import {  } from 'framer-motion';
 import { Cpu } from 'lucide-react';
 
 const LoadingSpinner = () => {

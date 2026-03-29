@@ -3,16 +3,19 @@
   "version": "1.0.0",
   "main": "management/server.js",
   "scripts": {
-    "test": "jest",
-    "management": "nodemon management/server.js",
-    "proxy": "nodemon proxy/server.js",
-    "dev": "concurrently \"npm run management\" \"npm run proxy\""
-  },
+  "test": "jest",
+  "management": "nodemon management/server.js",
+  "proxy": "nodemon proxy/server.js",
+  "dev": "concurrently \"npm run management\" \"npm run proxy\"",
+  "start:management": "node management/server.js",
+  "start:proxy": "node proxy/server.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.13.6",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",

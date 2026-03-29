@@ -7,10 +7,9 @@ import 'swagger-ui-react/swagger-ui.css';
 import {
     Terminal, FileText, Play, Code2,
     ChevronLeft, ExternalLink, ShieldCheck, Zap,
-    Copy, Check
+    Copy, Check, Info, Box, CreditCard, BarChart2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import LoadingSpinner from '../components/LoadingSpinner';
 
 const ApiDetails = () => {
     const { apiId } = useParams();
@@ -24,146 +23,272 @@ const ApiDetails = () => {
     const [copied, setCopied] = useState(false);
     const [showPlans, setShowPlans] = useState(false);
     const [subscribing, setSubscribing] = useState(false);
+    const [isStaged, setIsStaged] = useState(false);
 
     const MGT_URL = import.meta.env.VITE_MANAGEMENT_URL;
 
     useEffect(() => {
         fetchData();
+        checkStaging();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apiId]);
 
     const fetchData = async () => {
         try {
             setLoading(true);
             const [metaRes, snippetRes, plansRes] = await Promise.all([
-                axios.get(`${MGT_URL}/studio/${apiId}`),
+                axios.get(`${MGT_URL}/api/${apiId}`),
                 axios.get(`${MGT_URL}/api/${apiId}/snippets`),
                 axios.get(`${MGT_URL}/api/${apiId}/plans`)
             ]);
             setApiData(metaRes.data);
             setSnippets(snippetRes.data || []);
             setPlans(plansRes.data || []);
-        } catch (err) {
-            console.error("Documentation fetch failed");
+        } catch (error) {
+            console.error("Data fetch failed, trying fallback...");
+            try {
+                const fallbackMeta = await axios.get(`${MGT_URL}/studio/${apiId}`);
+                setApiData(fallbackMeta.data);
+            } catch (e) { console.error("Fallback failed"); }
         } finally {
             setLoading(false);
         }
     };
 
-    if (loading) return <LoadingSpinner />;
+    const checkStaging = () => {
+        const staged = JSON.parse(localStorage.getItem('stagedApis') || '[]');
+        setIsStaged(staged.includes(apiId));
+    };
+
+    const toggleStaging = () => {
+        const staged = JSON.parse(localStorage.getItem('stagedApis') || '[]');
+        if (staged.includes(apiId)) {
+            const up = staged.filter(id => id !== apiId);
+            localStorage.setItem('stagedApis', JSON.stringify(up));
+            setIsStaged(false);
+        } else {
+            if (staged.length < 3) {
+                staged.push(apiId);
+                localStorage.setItem('stagedApis', JSON.stringify(staged));
+                setIsStaged(true);
+            }
+        }
+    };
 
     const handleSubscribe = async (planId) => {
-        const apiKey = localStorage.getItem('apex_key');
-        if (!apiKey) {
-            alert("ACCESS_SIGNAL_MISSING: PLEASE LOGIN FIRST");
-            return;
-        }
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const apiKey = user.api_key;
+        if (!apiKey) { navigate('/login'); return; }
         setSubscribing(true);
         try {
-            await axios.post(`${MGT_URL}/api/${apiId}/subscribe`, {
-                planId
-            }, {
-                headers: { 'X-API-Key': apiKey }
+            await axios.post(`${MGT_URL}/api/${apiId}/subscribe`, { planId }, {
+                headers: { 'x-api-key': apiKey }
             });
-            setShowPlans(false);
             navigate('/dashboard');
-        } catch (err) {
-            alert("SUBSCRIPTION_ENGINE_FAILURE");
-        }
+        } catch (error) { console.error("Subscription failed"); }
         setSubscribing(false);
     };
 
-    const copyToClipboard = (text) => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     if (loading) return (
-        <div className="h-screen flex items-center justify-center bg-bg-deep">
-            <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+        <div className="h-[60vh] flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-[#10b981]/30 border-t-[#10b981] rounded-full animate-spin" />
         </div>
     );
 
     return (
-        <div className="min-h-[calc(100vh-100px)] flex flex-col gap-8 pb-12">
-            {/* Hero Section */}
-            <div className="relative group">
-                <div className="absolute inset-x-0 -top-40 h-80 bg-blue-600/10 blur-[120px] rounded-full -z-10" />
-
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 px-4">
-                    <div className="flex items-center gap-8">
-                        <div className="w-24 h-24 bg-white/5 border border-white/10 rounded-[32px] flex items-center justify-center overflow-hidden p-4 group-hover:border-blue-500/30 transition duration-500">
-                            {apiData?.logo_url ? (
-                                <img src={apiData.logo_url} alt="Logo" className="w-full h-full object-contain" />
-                            ) : (
-                                <Terminal size={40} className="text-slate-600" />
-                            )}
+        <div className="animate-fade-in flex flex-col lg:flex-row gap-8">
+            {/* Left Column: Metadata & Plans */}
+            <div className="lg:w-80 space-y-6">
+                <div className="bg-[#0D0D0D] border border-white/5 rounded-2xl p-6 space-y-6 sticky top-24">
+                    <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="w-20 h-20 bg-black border border-white/5 rounded-2xl flex items-center justify-center p-4 shadow-2xl">
+                            {apiData?.logo_url ? <img src={apiData.logo_url} alt="Logo" className="w-full h-full object-contain" /> : <Box size={32} className="text-zinc-700" />}
                         </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-4">
-                                <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase">{apiData?.name || 'API_NODE'}</h1>
-                                <span className="bg-green-500/10 text-green-400 text-[10px] font-black px-3 py-1 rounded-full border border-green-500/30 uppercase tracking-widest">Stable</span>
-                            </div>
-                            <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                                <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-blue-500" /> Verified_Protocol</span>
-                                <span className="flex items-center gap-1.5"><Zap size={14} className="text-yellow-500" /> &lt; 50ms Latency</span>
-                                <span className="text-indigo-400">{apiData?.category}</span>
-                            </div>
+                        <div>
+                            <h1 className="text-xl font-bold text-white tracking-tight">{apiData?.name}</h1>
+                            <p className="text-[10px] text-[#10b981] font-bold uppercase tracking-widest mt-1">Verified Provision</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <button
+                    <div className="space-y-3 pt-4 border-t border-white/5">
+                        <div className="flex justify-between text-xs">
+                            <span className="text-zinc-500">Category</span>
+                            <span className="text-zinc-300">{apiData?.category || 'General'}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                            <span className="text-zinc-500">Stability</span>
+                            <span className="text-emerald-500 font-medium">99.9% Uptime</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                            <span className="text-zinc-500">Latency</span>
+                            <span className="text-zinc-300">&lt; 50ms (Edge)</span>
+                        </div>
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                        <button 
                             onClick={() => setShowPlans(true)}
-                            className="px-8 py-3.5 bg-indigo-600 text-white rounded-2xl font-black text-xs tracking-[0.2em] shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all uppercase"
+                            className="w-full py-3 bg-[#10b981] text-black font-bold text-xs rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#10b981]/10"
                         >
-                            Subscribe_Access
+                            <CreditCard size={14} /> Subscribe Now
                         </button>
-                        <button className="p-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-400 hover:text-white transition">
-                            <ExternalLink size={20} />
+                        
+                        <button 
+                            onClick={toggleStaging}
+                            className={`w-full py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 border ${
+                                isStaged 
+                                ? 'bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981]' 
+                                : 'bg-white/5 border-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
+                            }`}
+                        >
+                            <BarChart2 size={14} /> {isStaged ? 'Staged for Comparison' : 'Add to Comparison'}
                         </button>
                     </div>
+
+                    <button className="w-full py-2.5 bg-black text-zinc-500 font-semibold text-[10px] uppercase tracking-widest rounded-xl hover:text-zinc-300 transition-all flex items-center justify-center gap-2 border border-white/5">
+                        <ExternalLink size={12} /> Official Ledger
+                    </button>
                 </div>
             </div>
 
-            {/* Plan Selector Modal Overlay */}
+            {/* Right Column: Console & Docs */}
+            <div className="flex-1 space-y-6">
+                <div className="flex items-center gap-1 bg-[#0D0D0D] p-1 border border-white/5 rounded-xl w-fit">
+                    {[
+                        { id: 'docs', label: 'Docs', icon: FileText },
+                        { id: 'interactive', label: 'Playground', icon: Terminal },
+                        { id: 'snippets', label: 'Snippets', icon: Code2 },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveMode(tab.id)}
+                            className={`px-6 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2
+                                ${activeMode === tab.id 
+                                    ? 'bg-white/5 text-[#10b981] shadow-inner' 
+                                    : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            <tab.icon size={14} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="bg-[#0D0D0D] border border-white/5 rounded-2xl min-h-[600px] overflow-hidden">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeMode}
+                            initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}
+                            className="p-8 h-full"
+                        >
+                            {activeMode === 'docs' && (
+                                <article className="prose prose-invert prose-emerald max-w-none">
+                                    <ReactMarkdown>{apiData?.readme_markdown || '# Documentation\nSynchronizing records from master node...'}</ReactMarkdown>
+                                </article>
+                            )}
+
+                            {activeMode === 'interactive' && (
+                                <div className="swagger-dark-eclipse">
+                                    {apiData?.openapi_spec ? (
+                                        (() => {
+                                            const spec = JSON.parse(JSON.stringify(apiData.openapi_spec));
+                                            spec.servers = [{ url: `${import.meta.env.VITE_PROXY_URL}/proxy/${apiId}` }];
+                                            spec.components = spec.components || {};
+                                            spec.components.securitySchemes = spec.components.securitySchemes || {};
+                                            spec.components.securitySchemes.ApiKeyAuth = {
+                                                type: 'apiKey', in: 'header', name: 'x-api-key'
+                                            };
+                                            spec.security = [{ ApiKeyAuth: [] }];
+                                            return <SwaggerUI spec={spec} />;
+                                        })()
+                                    ) : (
+                                        <div className="h-64 flex flex-col items-center justify-center text-zinc-700">
+                                            <Terminal size={48} className="mb-4 opacity-20" />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">No OpenAPI definition detected in node</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeMode === 'snippets' && (
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-4">Target Protocol</p>
+                                        {snippets.map((snip, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setSelectedSnippet(idx)}
+                                                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all
+                                                    ${selectedSnippet === idx ? 'bg-[#10b981]/10 text-[#10b981]' : 'text-zinc-500 hover:text-white'}`}
+                                            >
+                                                {snip.title}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="md:col-span-3">
+                                        <div className="bg-black rounded-xl border border-white/5 overflow-hidden shadow-2xl">
+                                            <div className="p-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
+                                                <span className="text-[10px] text-zinc-500 font-mono tracking-tighter">payload.keyverse.{snippets[selectedSnippet]?.title.toLowerCase()}</span>
+                                                <button 
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(snippets[selectedSnippet]?.content);
+                                                        setCopied(true);
+                                                        setTimeout(() => setCopied(false), 2000);
+                                                    }}
+                                                    className="p-2 text-zinc-500 hover:text-[#10b981] transition-colors"
+                                                >
+                                                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                                                </button>
+                                            </div>
+                                            <pre className="p-6 font-mono text-[11px] text-[#10b981]/80 leading-relaxed overflow-x-auto min-h-[300px]">
+                                                <code>{snippets[selectedSnippet]?.content}</code>
+                                            </pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            </div>
+
+            {/* Plan Selector Overlay */}
             <AnimatePresence>
                 {showPlans && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl"
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md"
                     >
                         <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            className="glass max-w-4xl w-full p-10 rounded-[48px] border border-white/5 space-y-8 relative overflow-hidden"
+                            initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }}
+                            className="bg-[#0D0D0D] border border-white/5 max-w-4xl w-full p-10 rounded-3xl relative shadow-[0_0_50px_rgba(0,0,0,1)]"
                         >
-                            <button onClick={() => setShowPlans(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition">CLOSE [X]</button>
-                            <header className="text-center space-y-2">
-                                <h2 className="text-3xl font-black italic text-white tracking-tighter">SELECT_SERVICE_PROTOCOL</h2>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Commit to a tier to initialize your node access</p>
-                            </header>
-
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <button onClick={() => setShowPlans(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white transition group">
+                                <Box size={20} className="group-hover:rotate-90 transition-transform" />
+                            </button>
+                            <div className="text-center mb-10">
+                                <h2 className="text-2xl font-bold text-white tracking-tight">Select Infrastructure Tier</h2>
+                                <p className="text-[10px] text-zinc-500 mt-2 uppercase tracking-[0.2em] font-bold">KeyVerse Economy Engine</p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 {plans.map((plan) => (
-                                    <div key={plan.id} className="p-6 bg-white/5 rounded-[32px] border border-white/5 flex flex-col gap-6 hover:border-blue-500/30 transition group">
-                                        <div className="space-y-1">
-                                            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{plan.name}</p>
-                                            <p className="text-2xl font-black text-white italic">${plan.price}<span className="text-[10px] text-slate-500 font-bold">/MO</span></p>
+                                    <div key={plan.id} className="p-6 rounded-2xl bg-black border border-white/5 flex flex-col justify-between hover:border-[#10b981]/30 transition group">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-[10px] font-black text-[#10b981] uppercase tracking-widest">{plan.name}</p>
+                                                <p className="text-2xl font-bold text-white mt-1">${plan.price}<span className="text-[10px] text-zinc-600 ml-1">/mo</span></p>
+                                            </div>
+                                            <div className="space-y-1 text-[10px] text-zinc-500 font-medium">
+                                                <p>• {plan.quota.toLocaleString()} Requests</p>
+                                                <p>• {plan.type.toUpperCase()} Routing</p>
+                                            </div>
                                         </div>
-                                        <ul className="space-y-3 flex-1">
-                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2"><Check size={12} className="text-green-500" /> {plan.quota.toLocaleString()} Requests</li>
-                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2"><Check size={12} className="text-green-500" /> Core_Gateway</li>
-                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2"><Check size={12} className="text-green-500" /> {plan.price > 0 ? 'Priority_Support' : 'Standard_Sync'}</li>
-                                        </ul>
-                                        <button
+                                        <button 
                                             onClick={() => handleSubscribe(plan.id)}
                                             disabled={subscribing}
-                                            className="w-full py-3 bg-white/5 border border-white/10 rounded-xl font-black text-[10px] tracking-widest uppercase hover:bg-blue-600 hover:text-white transition group-hover:border-transparent"
+                                            className="mt-6 w-full py-2.5 bg-[#10b981] text-black text-[10px] font-black rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#10b981]/10"
                                         >
-                                            {subscribing ? 'Processing...' : 'ACTIVATE_NODE'}
+                                            {subscribing ? 'Processing...' : 'Authorize Tier'}
                                         </button>
                                     </div>
                                 ))}
@@ -173,134 +298,12 @@ const ApiDetails = () => {
                 )}
             </AnimatePresence>
 
-            {/* Navigation Tabs */}
-            <div className="px-4 border-b border-white/5 flex gap-8">
-                {[
-                    { id: 'docs', label: 'Documentation', icon: FileText },
-                    { id: 'interactive', label: 'Interactive Mirror', icon: Play },
-                    { id: 'snippets', label: 'Code Hub', icon: Code2 },
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveMode(tab.id)}
-                        className={`pb-4 text-[11px] font-black uppercase tracking-[0.3em] transition-all relative flex items-center gap-2
-               ${activeMode === tab.id ? 'text-white' : 'text-slate-600 hover:text-slate-400'}`}
-                    >
-                        <tab.icon size={14} />
-                        {tab.label}
-                        {activeMode === tab.id && (
-                            <motion.div layoutId="activeDocTab" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                        )}
-                    </button>
-                ))}
-            </div>
-
-            {/* Content Area */}
-            <div className="px-4 flex-1">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={activeMode}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="h-full"
-                    >
-                        {activeMode === 'docs' && (
-                            <div className="max-w-4xl mx-auto glass p-10 rounded-[48px] border border-white/5 prose prose-invert prose-blue max-w-none">
-                                <ReactMarkdown>{apiData?.readme_markdown || '# Welcome to Documentation\n\nNo extended documentation provided for this API yet.'}</ReactMarkdown>
-                            </div>
-                        )}
-
-                        {activeMode === 'interactive' && (
-                            <div className="max-w-6xl mx-auto glass rounded-[48px] overflow-hidden border border-white/5 bg-slate-900/50">
-                                <div className="p-6 border-b border-white/5 bg-black/40 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-3 h-3 rounded-full bg-red-500/50" />
-                                        <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
-                                        <div className="w-3 h-3 rounded-full bg-green-500/50" />
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Interactive_Playground_v1.0</span>
-                                    </div>
-                                    <div className="text-[10px] font-black text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20 uppercase tracking-widest">
-                                        Ready_for_Live_Testing
-                                    </div>
-                                </div>
-                                <div className="swagger-dark p-4">
-                                    {apiData?.openapi_spec ? (
-                                        <SwaggerUI spec={apiData.openapi_spec} />
-                                    ) : (
-                                        <div className="h-64 flex flex-col items-center justify-center text-slate-600">
-                                            <Play size={48} className="mb-4 opacity-20" />
-                                            <p className="text-xs font-black uppercase tracking-widest">No OpenAPI Definition Found</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {activeMode === 'snippets' && (
-                            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {/* Language List */}
-                                <div className="glass p-6 rounded-[32px] border border-white/5 h-fit space-y-2">
-                                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 pl-2">Available_Targets</h3>
-                                    {snippets.map((snip, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={() => setSelectedSnippet(idx)}
-                                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-black text-xs transition-all duration-300
-                            ${selectedSnippet === idx ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-                                        >
-                                            {snip.title.replace('_', ' ').toUpperCase()}
-                                            {selectedSnippet === idx && <Zap size={14} className="animate-pulse" />}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Code Display */}
-                                <div className="md:col-span-2 space-y-6">
-                                    <div className="glass rounded-[32px] border border-white/5 overflow-hidden">
-                                        <div className="bg-black/40 px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                                            <span className="text-[10px] font-black text-blue-400 tracking-widest uppercase italic">{snippets[selectedSnippet]?.title} Code Payload</span>
-                                            <button
-                                                onClick={() => copyToClipboard(snippets[selectedSnippet]?.content)}
-                                                className="flex items-center gap-2 group text-slate-500 hover:text-white transition"
-                                            >
-                                                {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="group-hover:scale-110 transition" />}
-                                                <span className="text-[8px] font-black tracking-widest">{copied ? 'COPIED' : 'COPY_CODE'}</span>
-                                            </button>
-                                        </div>
-                                        <pre className="p-8 font-mono text-xs text-indigo-300 leading-relaxed overflow-x-auto scrollbar-hide bg-slate-900/40 min-h-[400px]">
-                                            <code>{snippets[selectedSnippet]?.content}</code>
-                                        </pre>
-                                    </div>
-
-                                    <div className="p-8 bg-blue-600/5 rounded-[32px] border border-blue-500/10 flex items-center gap-6">
-                                        <div className="w-12 h-12 bg-blue-600/20 rounded-2xl flex items-center justify-center text-blue-500">
-                                            <Zap size={24} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-black text-white italic">INTEGRATION_HINT</p>
-                                            <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Ensure you have the required dependencies (axios, requests, etc.) installed in your local environment. API keys should be passed via the `X-API-KEY` header for all protected protocols.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </motion.div>
-                </AnimatePresence>
-            </div>
-
             <style>{`
-        /* Swagger UI Dark Mode Theme Overrides */
-        .swagger-dark .swagger-ui {
-          filter: invert(88%) hue-rotate(180deg) brightness(1.1) contrast(0.9);
-        }
-        .swagger-dark .info, .swagger-dark .scheme-container {
-          display: none;
-        }
-        .swagger-dark .opblock-tag-section {
-          background: transparent !important;
-        }
-      `}</style>
+                .swagger-dark-eclipse .swagger-ui { filter: invert(0.9) hue-rotate(180deg) brightness(1.2); }
+                .swagger-dark-eclipse .info, .swagger-dark-eclipse .scheme-container { display: none; }
+                .swagger-dark-eclipse .opblock-tag-section { background: transparent !important; }
+                .swagger-dark-eclipse .opblock { border-radius: 12px !important; border-color: rgba(255,255,255,0.05) !important; background: rgba(0,0,0,0.4) !important; margin-bottom: 8px !important; }
+            `}</style>
         </div>
     );
 };

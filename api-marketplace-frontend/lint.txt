@@ -1,0 +1,47 @@
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\components\LoadingSpinner.jsx
+  1:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\components\Navbar.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\pages\ApiDetails.jsx
+  12:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                 no-unused-vars
+  32:8   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  45:18  error    'err' is defined but never used                                                                               no-unused-vars
+  69:18  error    'err' is defined but never used                                                                               no-unused-vars
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\pages\Dashboard.jsx
+   4:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                  no-unused-vars
+  22:8   warning  React Hook useEffect has missing dependencies: 'MGT_URL' and 'fetchStats'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  29:18  error    'err' is defined but never used                                                                                                no-unused-vars
+  48:18  error    'err' is defined but never used                                                                                                no-unused-vars
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\pages\Landing.jsx
+   5:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                               no-unused-vars
+  16:20  error    'err' is defined but never used                                                                             no-unused-vars
+  17:8   warning  React Hook useEffect has a missing dependency: 'MGT_URL'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\pages\Login.jsx
+  5:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\pages\MyApis.jsx
+   4:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                   no-unused-vars
+  22:18  error    'err' is defined but never used                                                                                 no-unused-vars
+  31:8   warning  React Hook useEffect has a missing dependency: 'fetchMyApis'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  43:18  error    'err' is defined but never used                                                                                 no-unused-vars
+
+D:\LUNARIS\Keyverse\key-verse\api-marketplace-frontend\src\pages\Studio.jsx
+    9:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                    no-unused-vars
+   25:8   warning  React Hook useEffect has a missing dependency: 'fetchApiData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   35:18  error    'err' is defined but never used                                                                                  no-unused-vars
+   50:18  error    'err' is defined but never used                                                                                  no-unused-vars
+  227:58  error    'err' is defined but never used                                                                                  no-unused-vars
+  227:63  error    Empty block statement                                                                                            no-empty
+  364:74  error    'err' is defined but never used                                                                                  no-unused-vars
+  364:79  error    Empty block statement                                                                                            no-empty
+  403:70  error    'err' is defined but never used                                                                                  no-unused-vars
+  403:75  error    Empty block statement                                                                                            no-empty
+
+✖ 28 problems (23 errors, 5 warnings)
+

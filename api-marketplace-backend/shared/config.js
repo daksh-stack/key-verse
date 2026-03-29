@@ -6,7 +6,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 // Database Pool
 const pool = new Pool({
     connectionString: process.env.DB_URL,
-    ssl: false
+    ssl: { rejectUnauthorized: false }
 });
 
 // Redis Client

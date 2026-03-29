@@ -2,117 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg-deep: #050508;
-  --bg-card: #0a0a0f;
-  --bg-glass: rgba(255, 255, 255, 0.03);
+  /* Core Eclipse Palette */
+  --bg-pitch: #050505;
+  --bg-surface: #0D0D0D;
+  --bg-elevated: #161616;
   
-  --primary: #3b82f6;
-  --primary-glow: rgba(59, 130, 246, 0.5);
-  --secondary: #a855f7;
-  --secondary-glow: rgba(168, 85, 247, 0.5);
-  --accent: #f43f5e;
+  --primary: #10b981; /* Emerald Mint */
+  --primary-soft: rgba(16, 185, 129, 0.1);
   
-  --text-main: #e2e8f0;
-  --text-muted: #94a3b8;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-neon: rgba(59, 130, 246, 0.3);
+  --text-main: #FFFFFF;
+  --text-dim: #A1A1AA;
+  --text-muted: #52525B;
   
-  --cyber-font: 'Space Grotesk', sans-serif;
-  --ui-font: 'Outfit', sans-serif;
+  --border-dim: rgba(255, 255, 255, 0.05);
+  --border-active: rgba(16, 185, 129, 0.3);
+  
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) transparent;
+  scrollbar-color: var(--text-muted) transparent;
 }
 
 body {
   margin: 0;
-  background-color: var(--bg-deep);
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+  background-color: var(--bg-pitch);
   color: var(--text-main);
-  font-family: var(--ui-font);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  min-height: 100vh;
 }
 
-/* Glassmorphism Classes */
-.glass {
-  background: var(--bg-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-}
-
-.glass-hover:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--border-neon);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
-}
-
-/* Anime / Cyber Accents */
-.neon-text {
-  text-shadow: 0 0 10px var(--primary-glow);
-}
-
-.neon-border {
-  border: 1px solid var(--primary);
-  box-shadow: 0 0 15px var(--primary-glow);
-}
-
-.speed-gradient {
-  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
-  background-size: 200% auto;
-  animation: shimmer 4s linear infinite;
-}
-
-@keyframes shimmer {
-  to { background-position: 200% center; }
-}
-
-/* Window Fit */
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  width: 100%;
-}
-
-h1, h2, h3, h4 {
-  font-family: var(--cyber-font);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-/* Anime-style Bold Outlines for specific elements */
-.manga-card {
-  border: 2px solid #000;
-  box-shadow: 4px 4px 0px #000;
-  transition: all 0.2s ease;
-}
-
-.manga-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--primary);
-}
-
-/* Custom Scrollbar */
+/* Minimalist Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-subtle);
-  border-radius: 10px;
+  background: var(--text-muted);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
+}
+
+/* Reusable Eclipse Components */
+.eclipse-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eclipse-card:hover {
+  border-color: var(--border-active);
+  background: var(--bg-elevated);
+}
+
+.eclipse-btn-primary {
+  background: var(--primary);
+  color: #000;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: transform 0.1s active;
+}
+
+.eclipse-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.eclipse-input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  color: var(--text-main);
+  padding: 10px 14px;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.eclipse-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--bg-elevated);
+}
+
+/* Typography Overrides */
+h1, h2, h3, h4 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

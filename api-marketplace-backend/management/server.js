@@ -21,6 +21,26 @@ app.use(helmet());
 // Connect to Redis
 connectRedis();
 
+// Provider Authentication Middleware
+const authenticateProvider = async (req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey) return res.status(401).json({ error: 'Missing X-API-Key header' });
+
+    try {
+        const result = await pool.query('SELECT * FROM users WHERE api_key = $1', [apiKey]);
+        if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid API Key' });
+        
+        const user = result.rows[0];
+        if (user.role !== 'provider') return res.status(403).json({ error: 'Forbidden: Provider access required' });
+        
+        req.user = user;
+        next();
+    } catch (err) {
+        console.error("Auth Error:", err);
+        res.status(500).json({ error: 'Authentication engine failure' });
+    }
+};
+
 // User Signup
 app.post('/users/signup', async (req, res) => {
     try {
@@ -91,7 +111,7 @@ app.get('/apis', async (req, res) => {
 });
 
 // Register API
-app.post('/apis/register', async (req, res) => {
+app.post('/apis/register', authenticateProvider, async (req, res) => {
     try {
         const { name, base_url } = req.body;
         if (!name || !base_url) {
@@ -223,12 +243,12 @@ app.get('/studio/:apiId', async (req, res) => {
 });
 
 // Update Studio Tabs (General PATCH)
-app.patch('/studio/:apiId/:tab', async (req, res) => {
+app.patch('/studio/:apiId/:tab', authenticateProvider, async (req, res) => {
     try {
         const { apiId, tab } = req.params;
         const data = req.body;
 
-        const allowedTabs = ['general', 'definitions', 'docs', 'gateway', 'monetize'];
+        const allowedTabs = ['general', 'definitions', 'docs', 'gateway', 'monetize', 'community'];
         if (!allowedTabs.includes(tab)) return res.status(400).json({ error: 'Invalid tab update' });
 
         let query = '';
@@ -275,7 +295,14 @@ app.get('/api/:apiId/snippets', async (req, res) => {
         // Generate snippets for every path/method in the spec
         const snippets = OpenAPIParser.getSnippets(spec, targets);
 
-        res.json(snippets);
+        const flattenedSnippets = [];
+        snippets.forEach(endpoint => {
+            if (endpoint.snippets) {
+                endpoint.snippets.forEach(s => flattenedSnippets.push(s));
+            }
+        });
+
+        res.json(flattenedSnippets);
     } catch (err) {
         console.error("Snippet Engine Error:", err);
         res.status(500).json({ error: 'Snippet generation failed' });
@@ -392,6 +419,33 @@ app.get('/api/:apiId/plans', async (req, res) => {
     }
 });
 
+// Delete a Plan
+app.delete('/plans/:planId', authenticateProvider, async (req, res) => {
+    try {
+        const { planId } = req.params;
+        await pool.query('DELETE FROM plans WHERE id = $1', [planId]);
+        res.json({ message: 'PLAN_DELETED' });
+    } catch (err) {
+        res.status(500).json({ error: 'Delete failed' });
+    }
+});
+
+// Add a Plan
+app.post('/api/:apiId/plans', authenticateProvider, async (req, res) => {
+    try {
+        const { apiId } = req.params;
+        const { name, quota, price, type } = req.body;
+        const result = await pool.query(`
+            INSERT INTO plans (name, quota, price, api_id, type)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `, [name, quota, price, apiId, type || 'standard']);
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: 'Plan creation failed' });
+    }
+});
+
 // --- Monthly Reset Job (1st of every month) ---
 cron.schedule('0 0 1 * *', async () => {
     console.log('📅 Initiating Monthly Usage Reset...');
@@ -408,3 +462,5 @@ cron.schedule('0 0 1 * *', async () => {
 app.listen(PORT, () => {
     console.log(`🚀 Management Plane running on port ${PORT}`);
 });
+
+module.exports = app;
