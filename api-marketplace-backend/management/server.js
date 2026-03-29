@@ -334,6 +334,72 @@ app.post('/api/analytics/push', async (req, res) => {
     }
 });
 
+const axios = require('axios');
+
+// --- Global Discovery Engine (APIs.guru Integration) ---
+let apisGuruCache = { data: null, lastFetched: 0 };
+const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 Hours
+
+const getApisGuruData = async () => {
+    const now = Date.now();
+    if (apisGuruCache.data && (now - apisGuruCache.lastFetched < CACHE_DURATION)) {
+        return apisGuruCache.data;
+    }
+    try {
+        console.log('🌐 Refreshing Global API Dictionary (APIs.guru)...');
+        const res = await axios.get('https://api.apis.guru/v2/list.json');
+        apisGuruCache = { data: res.data, lastFetched: now };
+        return res.data;
+    } catch (err) {
+        console.error("APIs.guru fetch failed:", err.message);
+        return apisGuruCache.data || {};
+    }
+};
+
+app.get('/apis/search', async (req, res) => {
+    try {
+        const { q = '' } = req.query;
+        const query = q.toLowerCase();
+
+        // 1. Fetch Internal APIs
+        const internalRes = await pool.query(
+            "SELECT id, name, category, logo_url FROM apis WHERE visibility->>'status' = 'public' AND (LOWER(name) LIKE $1 OR LOWER(category) LIKE $1)",
+            [`%${query}%`]
+        );
+        const internalApis = internalRes.rows.map(api => ({ ...api, origin: 'keyverse' }));
+
+        // 2. Fetch/Filter External APIs (APIs.guru) - only if query is substantial
+        let externalApis = [];
+        if (query.length > 2) {
+            const guruData = await getApisGuruData();
+            // gurusData is an object where keys are names like "github.com"
+            Object.entries(guruData).forEach(([key, value]) => {
+                const apiName = value.preferred || Object.keys(value.versions)[0];
+                const info = value.versions[apiName].info;
+                
+                if (info.title.toLowerCase().includes(query) || key.toLowerCase().includes(query)) {
+                    externalApis.push({
+                        id: `ext-${key}`,
+                        name: info.title,
+                        category: 'External Market',
+                        logo_url: info['x-logo']?.url || null,
+                        origin: 'external',
+                        external_url: info['x-origin']?.[0]?.url || null,
+                        description: info.description
+                    });
+                }
+            });
+        }
+
+        // 3. Merge & Limit (Priority to Internal)
+        const results = [...internalApis, ...externalApis.slice(0, 30)];
+        res.json(results);
+    } catch (err) {
+        console.error("Discovery Engine Failure:", err);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+
 // Get Public APIs
 app.get('/apis/public', async (req, res) => {
     try {
@@ -388,6 +454,53 @@ app.post('/api/:apiId/subscribe', async (req, res) => {
     } catch (err) {
         console.error("Subscription Error:", err);
         res.status(500).json({ error: 'Subscription failed' });
+    }
+});
+
+app.get('/apis/compare', async (req, res) => {
+    try {
+        const { ids } = req.query;
+        if (!ids) return res.json([]);
+        
+        const idList = ids.split(',');
+        const guruData = await getApisGuruData();
+        
+        const results = await Promise.all(idList.map(async (id) => {
+            if (id.startsWith('ext-')) {
+                const key = id.replace('ext-', '');
+                const entry = guruData[key];
+                if (!entry) return null;
+                const apiName = entry.preferred || Object.keys(entry.versions)[0];
+                const info = entry.versions[apiName].info;
+                
+                return {
+                    id,
+                    name: info.title,
+                    category: 'External Market',
+                    logo_url: info['x-logo']?.url || null,
+                    origin: 'external',
+                    plans: [{ name: 'MARKET', price: 'PAID/FREE', quota: 'DYNAMIC', type: 'EXTERNAL' }],
+                    stability: '99.9%',
+                    latency: 'Varies by Edge'
+                };
+            } else {
+                const apiRes = await pool.query('SELECT * FROM apis WHERE id = $1', [id]);
+                const plansRes = await pool.query('SELECT * FROM plans WHERE api_id = $1', [id]);
+                if (apiRes.rows.length === 0) return null;
+                return {
+                    ...apiRes.rows[0],
+                    origin: 'keyverse',
+                    plans: plansRes.rows,
+                    stability: '99.9% (Verified)',
+                    latency: '< 5ms (KeyVerse Edge)'
+                };
+            }
+        }));
+
+        res.json(results.filter(r => r !== null));
+    } catch (err) {
+        console.error("Comparison Aggregator Failure:", err);
+        res.status(500).json({ error: 'Aggregation failed' });
     }
 });
 

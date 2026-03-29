@@ -14,9 +14,10 @@ const Layout = () => {
 
             {/* Main Content Area */}
             <motion.div 
-                animate={{ marginLeft: isCollapsed ? 64 : 240 }}
-                className="flex-1 flex flex-col min-h-screen transition-all duration-300"
+                animate={{ marginLeft: isCollapsed ? 64 : 260 }}
+                className="flex-1 flex flex-col min-h-screen transition-all duration-300 relative"
             >
+                <div className="h-16" /> {/* Spacer for fixed Navbar */}
                 <Navbar />
                 <main className="p-8 max-w-[1600px] mx-auto w-full animate-fade-in">
                     <Outlet />

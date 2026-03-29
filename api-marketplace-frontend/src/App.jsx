@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import Landing from './pages/Landing';
+import Marketing from './pages/Marketing';
+import Landing from './pages/Landing'; // This is now the /hub
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import MyApis from './pages/MyApis';
@@ -11,8 +12,12 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Marketing standalone page */}
+        <Route path="/" element={<Marketing />} />
+
+        {/* Platform shell */}
         <Route path="/" element={<Layout />}>
-          <Route index element={<Landing />} />
+          <Route path="hub" element={<Landing />} />
           <Route path="login" element={<Login />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="my-apis" element={<MyApis />} />
