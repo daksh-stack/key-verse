@@ -63,10 +63,24 @@ app.post('/users/signup', async (req, res) => {
             user: result.rows[0]
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to create user' });
+        console.error("Signup Error:", err);
+        res.status(500).json({ 
+            error: 'Failed to create user',
+            details: err.message,
+            hint: 'This often happens if the email already exists or if the database schema is outdated (e.g., expects Integer but got UUID).'
+        });
     }
+
 });
+
+// Friendly error for accidental GET requests to signup
+app.get('/users/signup', (req, res) => {
+    res.status(405).json({ 
+        error: 'Method Not Allowed', 
+        message: 'The signup endpoint only accepts POST requests from the KeyVerse frontend. Please use the registration form in the app.' 
+    });
+});
+
 
 // User Login
 app.post('/users/login', async (req, res) => {
@@ -180,6 +194,17 @@ const runMigration = async () => {
                 api_key UUID UNIQUE DEFAULT gen_random_uuid(),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- Check if we need to convert id to UUID (Legacy migration support)
+            DO $$ 
+            BEGIN 
+                IF (SELECT data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='users' AND column_name='id') != 'uuid' THEN
+                    RAISE NOTICE 'Detected non-UUID ID column. Hand-off to manual migration or handle with care.';
+                    -- We won't auto-migrate existing data to UUID here to prevent data loss, 
+                    -- but we log it so the developer knows why it might fail.
+                END IF;
+            END $$;
+
 
             CREATE TABLE IF NOT EXISTS apis (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -406,9 +431,15 @@ app.get('/apis/public', async (req, res) => {
         const result = await pool.query("SELECT id, name, category, logo_url FROM apis WHERE visibility->>'status' = 'public'");
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: 'Portal sync failed' });
+        console.error("Portal sync error details:", err);
+        res.status(500).json({ 
+            error: 'Portal sync failed', 
+            details: err.message,
+            hint: 'Ensure that the apis table exists and visibility is correctly formatted as JSONB'
+        });
     }
 });
+
 
 // --- Consumer Endpoints ---
 
