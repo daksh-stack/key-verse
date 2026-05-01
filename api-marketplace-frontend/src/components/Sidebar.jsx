@@ -53,7 +53,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </div>
 
       {/* Navigation Ecosystem */}
-      <nav className="flex-1 px-3 space-y-2">
+      <nav className="flex-1 px-1 space-y-2">
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path || (item.id === 'hub' && location.pathname.startsWith('/api/'));
           
