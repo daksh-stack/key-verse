@@ -7,7 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Zap
+  Zap,
+  Upload
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -19,7 +20,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const menuItems = [
     { id: 'hub', label: 'Infrastructure Hub', icon: Globe, path: '/hub' },
     { id: 'dashboard', label: 'Node Analytics', icon: LayoutDashboard, path: '/dashboard' },
-    { id: 'studio', label: 'Provider Studio', icon: Terminal, path: '/studio' },
+    { id: 'my-apis', label: 'Provider Terminal', icon: Terminal, path: '/my-apis' },
+    { id: 'publish', label: 'Publish API', icon: Upload, path: '/publish' },
   ];
 
   const handleLogout = () => {
@@ -57,10 +59,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path || (item.id === 'hub' && location.pathname.startsWith('/api/'));
           
-          // RBAC: Hide Studio if not a provider
-          if (item.id === 'studio' && user.role !== 'provider') return null;
-          // Hide Dashboard for anonymous users
-          if (item.id === 'dashboard' && !user.api_key) return null;
+          // Hide authenticated tools for guest/anonymous users
+          if ((item.id === 'publish' || item.id === 'my-apis' || item.id === 'studio' || item.id === 'dashboard') && !user.api_key) return null;
 
           return (
             <button

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Globe, Server, Cpu, Database, ArrowRight, Activity, Box, PlusCircle } from 'lucide-react';
+import { Plus, Globe, Server, Cpu, Database, ArrowRight, Activity, Box, PlusCircle, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
@@ -149,9 +149,36 @@ const MyApis = () => {
                     </div>
 
                     {apis.length === 0 && !loading && (
-                        <div className="py-32 text-center rounded-2xl border border-dashed border-white/5 bg-white/2">
-                            <Box className="mx-auto text-zinc-800 mb-4" size={40} />
-                            <p className="text-zinc-600 text-sm">No infrastructure nodes registered yet.</p>
+                        <div className="space-y-3 opacity-50 pointer-events-none">
+                            {[1, 2].map((i) => (
+                                <div key={`mock-${i}`} className="bg-[#0D0D0D] border border-white/5 p-5 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-12 h-12 bg-black border border-white/5 rounded-xl flex items-center justify-center text-zinc-700">
+                                            <Server size={22} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-semibold uppercase tracking-tight">Demo Node {i}</h3>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <Globe size={10} className="text-zinc-600" />
+                                                <span className="text-[10px] text-zinc-600 font-mono italic">Awaiting Registration</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-6">
+                                        <div className="hidden sm:flex flex-col items-end">
+                                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Offline</span>
+                                            <span className="text-[10px] text-zinc-700 font-mono">Unsynced</span>
+                                        </div>
+                                        <div className="bg-white/5 p-2 rounded-lg text-zinc-700">
+                                            <ArrowRight size={18} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            <div className="pt-6 text-center">
+                                <p className="text-zinc-600 text-sm font-bold uppercase tracking-widest text-[10px]">No infrastructure nodes active. Complete registration above.</p>
+                            </div>
                         </div>
                     )}
                 </div>

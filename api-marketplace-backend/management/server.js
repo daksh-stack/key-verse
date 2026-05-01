@@ -4,6 +4,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
 const { randomUUID } = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const SwaggerParser = require('@apidevtools/swagger-parser');
 const OpenAPIParser = require('openapi-snippet');
 const nodemailer = require('nodemailer');
@@ -21,19 +24,17 @@ app.use(helmet());
 // Connect to Redis
 connectRedis();
 
-// Provider Authentication Middleware
-const authenticateProvider = async (req, res, next) => {
-    const apiKey = req.headers['x-api-key'];
-    if (!apiKey) return res.status(401).json({ error: 'Missing X-API-Key header' });
+// Universal Authentication Middleware
+const authenticateUser = async (req, res, next) => {
+    const apiToken = req.headers['authorization']?.split(' ')[1] || req.headers['x-api-key'];
+    if (!apiToken) return res.status(401).json({ error: 'Missing Authentication Token' });
 
     try {
-        const result = await pool.query('SELECT * FROM users WHERE api_key = $1', [apiKey]);
-        if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid API Key' });
+        // Find user by either JWT simulation (token) or standard x-api-key
+        const result = await pool.query('SELECT * FROM users WHERE api_key = $1 OR id::text = $1', [apiToken]);
+        if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid Credentials' });
 
-        const user = result.rows[0];
-        if (user.role !== 'provider') return res.status(403).json({ error: 'Forbidden: Provider access required' });
-
-        req.user = user;
+        req.user = result.rows[0];
         next();
     } catch (err) {
         console.error("Auth Error:", err);
@@ -125,7 +126,7 @@ app.get('/apis', async (req, res) => {
 });
 
 // Register API
-app.post('/apis/register', authenticateProvider, async (req, res) => {
+app.post('/apis/register', authenticateUser, async (req, res) => {
     try {
         const { name, base_url } = req.body;
         if (!name || !base_url) {
@@ -139,6 +140,66 @@ app.post('/apis/register', authenticateProvider, async (req, res) => {
         res.status(201).json({ message: 'API registered successfully', apiId });
     } catch (err) {
         res.status(500).json({ error: 'Failed to register API' });
+    }
+});
+
+// Parse OpenAPI Document
+app.post('/apis/parse', authenticateUser, async (req, res) => {
+    try {
+        const { content } = req.body;
+        if (!content) return res.status(400).json({ error: 'Spec content missing' });
+
+        const tmpPath = path.join(os.tmpdir(), `openapi-${Date.now()}.yaml`);
+        fs.writeFileSync(tmpPath, content);
+
+        const api = await SwaggerParser.parse(tmpPath);
+        fs.unlinkSync(tmpPath); // Cleanup
+
+        const name = api.info?.title || '';
+        const description = api.info?.description || '';
+        const logo_url = api.info?.['x-logo']?.url || '';
+        let base_url = '';
+        if (api.servers && api.servers.length > 0) {
+            base_url = api.servers[0].url;
+        } else if (api.host) { // Swagger 2.0 fallback
+            base_url = (api.schemes ? api.schemes[0] : 'https') + '://' + api.host + (api.basePath || '');
+        }
+
+        res.json({ name, description, logo_url, base_url, openapi_spec: api });
+    } catch (err) {
+        console.error("Parse Error:", err);
+        res.status(400).json({ error: 'Failed to parse OpenAPI document. Ensure valid JSON or YAML.' });
+    }
+});
+
+// Full Publish API (Rich Config)
+app.post('/apis/publish', authenticateUser, async (req, res) => {
+    try {
+        const { name, base_url, description, logo_url, category, openapi_spec, pricing_tiers } = req.body;
+        if (!name || !base_url) return res.status(400).json({ error: 'Name and base URL required' });
+
+        const apiResult = await pool.query(
+            `INSERT INTO apis (name, base_url, readme_markdown, logo_url, category, openapi_spec) 
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, 
+            [name, base_url, description, logo_url, category || 'General', openapi_spec]
+        );
+        const apiId = apiResult.rows[0].id;
+
+        if (pricing_tiers && pricing_tiers.length > 0) {
+             for (const plan of pricing_tiers) {
+                 await pool.query(`
+                     INSERT INTO plans (name, quota, price, api_id, type)
+                     VALUES ($1, $2, $3, $4, $5)
+                 `, [plan.name, parseInt(plan.quota), parseFloat(plan.price), apiId, 'standard']);
+             }
+        } else {
+             await seedDefaultPlans(apiId);
+        }
+
+        res.status(201).json({ message: 'API published successfully', apiId });
+    } catch (err) {
+        console.error("Publish Error:", err);
+        res.status(500).json({ error: 'Failed to publish API' });
     }
 });
 
@@ -268,7 +329,7 @@ app.get('/studio/:apiId', async (req, res) => {
 });
 
 // Update Studio Tabs (General PATCH)
-app.patch('/studio/:apiId/:tab', authenticateProvider, async (req, res) => {
+app.patch('/studio/:apiId/:tab', authenticateUser, async (req, res) => {
     try {
         const { apiId, tab } = req.params;
         const data = req.body;
@@ -566,7 +627,7 @@ app.get('/api/:apiId/plans', async (req, res) => {
 });
 
 // Delete a Plan
-app.delete('/plans/:planId', authenticateProvider, async (req, res) => {
+app.delete('/plans/:planId', authenticateUser, async (req, res) => {
     try {
         const { planId } = req.params;
         await pool.query('DELETE FROM plans WHERE id = $1', [planId]);
@@ -577,7 +638,7 @@ app.delete('/plans/:planId', authenticateProvider, async (req, res) => {
 });
 
 // Add a Plan
-app.post('/api/:apiId/plans', authenticateProvider, async (req, res) => {
+app.post('/api/:apiId/plans', authenticateUser, async (req, res) => {
     try {
         const { apiId } = req.params;
         const { name, quota, price, type } = req.body;

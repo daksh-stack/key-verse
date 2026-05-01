@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import MyApis from './pages/MyApis';
 import Studio from './pages/Studio';
 import ApiDetails from './pages/ApiDetails';
+import PublishApi from './pages/PublishApi';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="my-apis" element={<MyApis />} />
+          <Route path="publish" element={<PublishApi />} />
           <Route path="studio/:apiId" element={<Studio />} />
           <Route path="api/:apiId" element={<ApiDetails />} />
         </Route>
