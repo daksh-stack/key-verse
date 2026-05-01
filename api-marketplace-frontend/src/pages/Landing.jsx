@@ -218,19 +218,19 @@ const Landing = () => {
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 100, opacity: 0 }}
-                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm"
+                        className="fixed bottom-4 sm:bottom-8 left-0 right-0 mx-auto z-50 w-full max-w-sm px-4"
                     >
-                        <div className="bg-black/95 backdrop-blur-3xl border border-[#10b981]/20 p-5 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.7)] flex items-center justify-between gap-4">
-                            <div className="flex-1 px-2">
-                                <p className="text-white text-xs font-black tracking-tight">{selectedApis.length} Unit{selectedApis.length > 1 ? 's' : ''} Staged</p>
-                                <p className="text-[9px] text-[#10b981] uppercase font-black tracking-[0.2em] mt-1">Matrix Load Ready</p>
+                        <div className="bg-black/95 backdrop-blur-3xl border border-[#10b981]/20 p-4 sm:p-5 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.7)] flex items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex-1 px-1 sm:px-2">
+                                <p className="text-white text-[11px] sm:text-xs font-black tracking-tight leading-none">{selectedApis.length} Unit{selectedApis.length > 1 ? 's' : ''} Staged</p>
+                                <p className="text-[8px] sm:text-[9px] text-[#10b981] uppercase font-black tracking-[0.2em] mt-1.5 leading-none">Matrix Ready</p>
                             </div>
 
                             <button
                                 onClick={handleCompareRequest}
-                                className="bg-[#10b981] text-black px-6 py-3 rounded-2xl text-xs font-black shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                                className="bg-[#10b981] text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 sm:gap-3"
                             >
-                                <BarChart2 size={16} /> Benchmark
+                                <BarChart2 size={14} className="flex-shrink-0" /> <span className="whitespace-nowrap">Benchmark</span>
                             </button>
                         </div>
                     </motion.div>

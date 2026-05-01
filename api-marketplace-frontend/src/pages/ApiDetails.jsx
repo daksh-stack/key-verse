@@ -58,22 +58,40 @@ const ApiDetails = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [metaRes, snippetRes, plansRes] = await Promise.all([
-                axios.get(`${MGT_URL}/studio/${apiId}`), // Changed to focus on full info endpoint if available
-                axios.get(`${MGT_URL}/api/${apiId}/snippets`),
-                axios.get(`${MGT_URL}/api/${apiId}/plans`)
+            const [compareRes] = await Promise.all([
+                axios.get(`${MGT_URL}/apis/compare?ids=${apiId}`).catch(() => ({ data: [] }))
             ]);
-            setApiData(metaRes.data);
-            setSnippets(snippetRes.data || []);
-            setPlans(plansRes.data || []);
-        } catch (error) {
-            console.error("Data fetch failed, trying fallback...");
-            try {
-                const fallbackMeta = await axios.get(`${MGT_URL}/api/${apiId}`);
-                setApiData(fallbackMeta.data[0] || fallbackMeta.data);
-            } catch (e) {
-                console.error("Fallback failed");
+            
+            let data = compareRes.data && compareRes.data.length > 0 ? compareRes.data[0] : null;
+
+            if (data) {
+                setApiData(data);
+                setPlans(data.plans || []);
+                
+                if (data.origin === 'keyverse') {
+                    try {
+                        const snippetRes = await axios.get(`${MGT_URL}/api/${apiId}/snippets`);
+                        setSnippets(snippetRes.data || []);
+                    } catch (e) {
+                         setSnippets([]);
+                    }
+                } else {
+                    setSnippets([]);
+                }
+            } else {
+                const metaRes = await axios.get(`${MGT_URL}/studio/${apiId}`);
+                setApiData(metaRes.data);
+                try {
+                    const snippetRes = await axios.get(`${MGT_URL}/api/${apiId}/snippets`);
+                    setSnippets(snippetRes.data || []);
+                } catch(e) {}
+                try {
+                    const plansRes = await axios.get(`${MGT_URL}/api/${apiId}/plans`);
+                    setPlans(plansRes.data || []);
+                } catch(e) {}
             }
+        } catch (error) {
+            console.error("Data fetch failed", error);
         } finally {
             setLoading(false);
         }
@@ -207,7 +225,7 @@ const ApiDetails = () => {
                         >
                             {activeMode === 'docs' && (
                                 <article className="prose prose-invert prose-emerald max-w-none">
-                                    <ReactMarkdown>{apiData?.readme_markdown || '# Documentation\nSynchronizing records from master node...'}</ReactMarkdown>
+                                    <ReactMarkdown>{apiData?.readme_markdown || apiData?.description || '# Documentation\nSynchronizing records from master node...'}</ReactMarkdown>
                                 </article>
                             )}
 
@@ -225,6 +243,8 @@ const ApiDetails = () => {
                                             spec.security = [{ ApiKeyAuth: [] }];
                                             return <SwaggerUI spec={spec} />;
                                         })()
+                                    ) : apiData?.swaggerUrl ? (
+                                        <SwaggerUI url={apiData.swaggerUrl} />
                                     ) : (
                                         <div className="h-64 flex flex-col items-center justify-center text-zinc-700">
                                             <Terminal size={48} className="mb-4 opacity-20" />
@@ -235,41 +255,48 @@ const ApiDetails = () => {
                             )}
 
                             {activeMode === 'snippets' && (
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-4">Target Protocol</p>
-                                        {snippets.map((snip, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => setSelectedSnippet(idx)}
-                                                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all
-                                                    ${selectedSnippet === idx ? 'bg-[#10b981]/10 text-[#10b981]' : 'text-zinc-500 hover:text-white'}`}
-                                            >
-                                                {snip.title}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="md:col-span-3">
-                                        <div className="bg-black rounded-xl border border-white/5 overflow-hidden shadow-2xl">
-                                            <div className="p-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
-                                                <span className="text-[10px] text-zinc-500 font-mono tracking-tighter">payload.keyverse.{snippets[selectedSnippet]?.title.toLowerCase()}</span>
-                                                <button 
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(snippets[selectedSnippet]?.content);
-                                                        setCopied(true);
-                                                        setTimeout(() => setCopied(false), 2000);
-                                                    }}
-                                                    className="p-2 text-zinc-500 hover:text-[#10b981] transition-colors"
+                                snippets.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-4">Target Protocol</p>
+                                            {snippets.map((snip, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setSelectedSnippet(idx)}
+                                                    className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all
+                                                        ${selectedSnippet === idx ? 'bg-[#10b981]/10 text-[#10b981]' : 'text-zinc-500 hover:text-white'}`}
                                                 >
-                                                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                                                    {snip.title}
                                                 </button>
+                                            ))}
+                                        </div>
+                                        <div className="md:col-span-3">
+                                            <div className="bg-black rounded-xl border border-white/5 overflow-hidden shadow-2xl">
+                                                <div className="p-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
+                                                    <span className="text-[10px] text-zinc-500 font-mono tracking-tighter">payload.keyverse.{snippets[selectedSnippet]?.title.toLowerCase()}</span>
+                                                    <button 
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(snippets[selectedSnippet]?.content);
+                                                            setCopied(true);
+                                                            setTimeout(() => setCopied(false), 2000);
+                                                        }}
+                                                        className="p-2 text-zinc-500 hover:text-[#10b981] transition-colors"
+                                                    >
+                                                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                                                    </button>
+                                                </div>
+                                                <pre className="p-6 font-mono text-[11px] text-[#10b981]/80 leading-relaxed overflow-x-auto min-h-[300px]">
+                                                    <code>{snippets[selectedSnippet]?.content}</code>
+                                                </pre>
                                             </div>
-                                            <pre className="p-6 font-mono text-[11px] text-[#10b981]/80 leading-relaxed overflow-x-auto min-h-[300px]">
-                                                <code>{snippets[selectedSnippet]?.content}</code>
-                                            </pre>
                                         </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="h-64 flex flex-col items-center justify-center text-zinc-700">
+                                        <Code2 size={48} className="mb-4 opacity-20" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">No snippets available for this element</p>
+                                    </div>
+                                )
                             )}
                         </motion.div>
                     </AnimatePresence>

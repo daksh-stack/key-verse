@@ -1,0 +1,70 @@
+=== TABLES ===
+ - users
+ - apis
+ - plans
+ - subscriptions
+
+=== COLUMNS ===
+[apis]
+  id: uuid (default: gen_random_uuid())
+  name: text (default: none)
+  base_url: text (default: none)
+  logo_url: text (default: none)
+  openapi_spec: jsonb (default: none)
+  readme_markdown: text (default: none)
+  category: text (default: 'General'::text)
+  visibility: jsonb (default: '{"status": "public"}'::jsonb)
+  gateway_config: jsonb (default: '{"timeout": 5000}'::jsonb)
+  monetization: jsonb (default: '{"mode": "free"}'::jsonb)
+  mock_enabled: boolean (default: false)
+  mock_response: jsonb (default: '{"body": {"message": "ApexHub Mock Response v1.0"}, "status": 200}'::jsonb)
+  deployment_type: text (default: 'hosted'::text)
+  external_gateway_url: text (default: none)
+  created_at: timestamp without time zone (default: CURRENT_TIMESTAMP)
+[plans]
+  id: uuid (default: gen_random_uuid())
+  name: text (default: none)
+  quota: integer (default: none)
+  price: numeric (default: none)
+  api_id: uuid (default: none)
+  type: text (default: 'standard'::text)
+  created_at: timestamp without time zone (default: CURRENT_TIMESTAMP)
+[subscriptions]
+  id: uuid (default: gen_random_uuid())
+  user_id: uuid (default: none)
+  api_id: uuid (default: none)
+  plan_id: uuid (default: none)
+  usage_count: integer (default: 0)
+  status: text (default: 'active'::text)
+  last_reset: timestamp without time zone (default: CURRENT_TIMESTAMP)
+[users]
+  id: uuid (default: gen_random_uuid())
+  email: text (default: none)
+  password_hash: text (default: none)
+  role: text (default: 'consumer'::text)
+  api_key: uuid (default: gen_random_uuid())
+  created_at: timestamp without time zone (default: CURRENT_TIMESTAMP)
+users rows: 25
+apis rows: 4
+plans rows: 18
+subscriptions rows: 1
+
+=== SAMPLE USERS ===
+{"id":"bad6bdac-8af0-4d67-9f88-00e745eed173","email":"pilot@apexhub.io","role":"consumer"}
+{"id":"b8f6bdd4-577b-47be-b6e2-b05c3d16e696","email":"guest@apexhub.io","role":"consumer"}
+{"id":"c362a8e0-0777-4bfa-adb8-e9399c788a51","email":"test-1774713775954@example.com","role":"consumer"}
+
+=== SAMPLE APIS ===
+{"id":"77ac7519-0ac1-46d2-aa68-1ed16758f945","name":"QA-Pulse-v1","base_url":"https://httpbin.org/get"}
+{"id":"c6a1bb37-9ed7-4dca-9e99-c0fbd8d66f56","name":"Market Demo API","base_url":"https://jsonplaceholder.typicode.com"}
+{"id":"88f919e9-9f09-482d-9978-6fbfdca9f482","name":"Updated Name","base_url":"http://test.com"}
+
+=== API SPEC STATUS ===
+{"id":"77ac7519-0ac1-46d2-aa68-1ed16758f945","name":"QA-Pulse-v1","has_spec":false,"has_docs":false}
+{"id":"c6a1bb37-9ed7-4dca-9e99-c0fbd8d66f56","name":"Market Demo API","has_spec":false,"has_docs":false}
+{"id":"88f919e9-9f09-482d-9978-6fbfdca9f482","name":"Updated Name","has_spec":true,"has_docs":true}
+{"id":"0abe192d-91b6-4686-9041-092750e535c5","name":"Real Market Demo (JSONPlaceholder)","has_spec":true,"has_docs":true}
+
+=== TEST SIGNUP ===
+INSERT OK: {"id":"d6f480cd-19e3-412b-8271-9e91004368fb","email":"test_diag_928374@test.com","role":"consumer","api_key":"dc33b1c4-eec8-4b23-84ba-970404821e1e"}
+Cleanup done

@@ -1,8 +1,8 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, User, LogOut, LayoutGrid, Zap, Layers, BarChart2 } from 'lucide-react';
+import { Search, User, LogOut, LayoutGrid, Zap, Layers, BarChart2, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const Navbar = () => {
+const Navbar = ({ isCollapsed, setIsCollapsed }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem('user'));
@@ -20,14 +20,24 @@ const Navbar = () => {
         <nav className="fixed top-0 left-0 right-0 h-16 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 z-[100] px-6">
             <div className="max-w-[1600px] h-full mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-8">
-                    <Link to="/" className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981] border border-[#10b981]/20 group-hover:bg-[#10b981] group-hover:text-black transition-all">
-                            <Zap size={18} fill="currentColor" />
-                        </div>
-                        <span className="text-white font-black tracking-tighter text-lg italic">KEYVERSE</span>
-                    </Link>
+                    <div className="flex items-center gap-4">
+                        {setIsCollapsed && (
+                            <button 
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className="md:hidden p-2 text-zinc-400 hover:text-white transition"
+                            >
+                                <Menu size={20} />
+                            </button>
+                        )}
+                        <Link to="/" className="flex items-center gap-2 group">
+                            <div className="w-8 h-8 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981] border border-[#10b981]/20 group-hover:bg-[#10b981] group-hover:text-black transition-all">
+                                <Zap size={18} fill="currentColor" />
+                            </div>
+                            <span className="text-white font-black tracking-tighter text-lg italic hidden sm:block">KEYVERSE</span>
+                        </Link>
+                    </div>
 
-                    <div className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
+                    {/* <div className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
                         <Link 
                             to="/hub" 
                             className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
@@ -46,7 +56,10 @@ const Navbar = () => {
                                 <BarChart2 size={14} /> Node Analytics
                             </Link>
                         )}
-                    </div>
+                    </div> */}
+
+                    {/* this was the extra on the navbar */}
+
                 </div>
 
                 <div className="flex items-center gap-4">

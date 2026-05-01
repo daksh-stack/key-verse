@@ -29,10 +29,10 @@ const authenticateProvider = async (req, res, next) => {
     try {
         const result = await pool.query('SELECT * FROM users WHERE api_key = $1', [apiKey]);
         if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid API Key' });
-        
+
         const user = result.rows[0];
         if (user.role !== 'provider') return res.status(403).json({ error: 'Forbidden: Provider access required' });
-        
+
         req.user = user;
         next();
     } catch (err) {
@@ -64,7 +64,7 @@ app.post('/users/signup', async (req, res) => {
         });
     } catch (err) {
         console.error("Signup Error:", err);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Failed to create user',
             details: err.message,
             hint: 'This often happens if the email already exists or if the database schema is outdated (e.g., expects Integer but got UUID).'
@@ -75,9 +75,9 @@ app.post('/users/signup', async (req, res) => {
 
 // Friendly error for accidental GET requests to signup
 app.get('/users/signup', (req, res) => {
-    res.status(405).json({ 
-        error: 'Method Not Allowed', 
-        message: 'The signup endpoint only accepts POST requests from the KeyVerse frontend. Please use the registration form in the app.' 
+    res.status(405).json({
+        error: 'Method Not Allowed',
+        message: 'The signup endpoint only accepts POST requests from the KeyVerse frontend. Please use the registration form in the app.'
     });
 });
 
@@ -87,14 +87,14 @@ app.post('/users/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        
+
         if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid identity credentials' });
-        
+
         const user = result.rows[0];
         const match = await bcrypt.compare(password, user.password_hash);
-        
+
         if (!match) return res.status(401).json({ error: 'Invalid identity credentials' });
-        
+
         res.json({
             message: 'Session initialized!',
             user: { id: user.id, email: user.email, role: user.role, api_key: user.api_key }
@@ -182,7 +182,7 @@ app.get('/stats/:apiKey', async (req, res) => {
 const runMigration = async () => {
     try {
         console.log('📦 Starting Comprehensive Migration: Standardizing on UUID identity nodes...');
-        
+
         await pool.query(`
             CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -401,7 +401,7 @@ app.get('/apis/search', async (req, res) => {
             Object.entries(guruData).forEach(([key, value]) => {
                 const apiName = value.preferred || Object.keys(value.versions)[0];
                 const info = value.versions[apiName].info;
-                
+
                 if (info.title.toLowerCase().includes(query) || key.toLowerCase().includes(query)) {
                     externalApis.push({
                         id: `ext-${key}`,
@@ -432,8 +432,8 @@ app.get('/apis/public', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error("Portal sync error details:", err);
-        res.status(500).json({ 
-            error: 'Portal sync failed', 
+        res.status(500).json({
+            error: 'Portal sync failed',
             details: err.message,
             hint: 'Ensure that the apis table exists and visibility is correctly formatted as JSONB'
         });
@@ -492,10 +492,10 @@ app.get('/apis/compare', async (req, res) => {
     try {
         const { ids } = req.query;
         if (!ids) return res.json([]);
-        
+
         const idList = ids.split(',');
         const guruData = await getApisGuruData();
-        
+
         const results = await Promise.all(idList.map(async (id) => {
             if (id.startsWith('ext-')) {
                 const key = id.replace('ext-', '');
@@ -503,16 +503,18 @@ app.get('/apis/compare', async (req, res) => {
                 if (!entry) return null;
                 const apiName = entry.preferred || Object.keys(entry.versions)[0];
                 const info = entry.versions[apiName].info;
-                
+
                 return {
                     id,
                     name: info.title,
                     category: 'External Market',
                     logo_url: info['x-logo']?.url || null,
                     origin: 'external',
-                    plans: [{ name: 'MARKET', price: 'PAID/FREE', quota: 'DYNAMIC', type: 'EXTERNAL' }],
+                    plans: [{ name: 'MARKET', price: 'PAID/FREE', quota: 'DYNAMIC', type: 'EXTERNAL', id: id }],
                     stability: '99.9%',
-                    latency: 'Varies by Edge'
+                    latency: 'Varies by Edge',
+                    description: info.description,
+                    swaggerUrl: entry.versions[apiName].swaggerUrl || entry.versions[apiName].swaggerYamlUrl
                 };
             } else {
                 const apiRes = await pool.query('SELECT * FROM apis WHERE id = $1', [id]);
