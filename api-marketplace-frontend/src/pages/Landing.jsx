@@ -158,8 +158,8 @@ const Landing = () => {
                                 onClick={() => api.origin === 'external' ? window.open(api.external_url, '_blank') : navigate(`/api/${api.id}`)}
                                 className={`group flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
                                     selectedApis.includes(api.id) 
-                                    ? 'bg-[#10b981]/5 border-[#10b981]/30' 
-                                    : 'bg-[#0D0D0D] border-white/5 hover:border-[#10b981]/30 hover:bg-[#121212]'
+                                    ? 'bg-[#10b981]/50 border-[#10b981]/30' 
+                                    : 'bg-[#0D0D0D] border-white/50 hover:border-[#10b981]/30 hover:bg-[#121212]'
                                 }`}
                             >
                                 <div className="flex items-center gap-5">
@@ -168,7 +168,7 @@ const Landing = () => {
                                         className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
                                             selectedApis.includes(api.id)
                                             ? 'bg-[#10b981] border-[#10b981] text-black shadow-lg shadow-[#10b981]/20'
-                                            : 'border-white/10 text-transparent hover:border-[#10b981]'
+                                            : 'border-white/90 text-transparent hover:border-[#10b981]'
                                         }`}
                                     >
                                         <Check size={12} />
